@@ -1,4 +1,4 @@
-library(tidyverse); library(skimr); library(forcats)
+library(tidyverse); library(skimr); library(forcats); library(GGally); library(ggplot2); library(car)
 
 # Load the data
 
@@ -56,3 +56,31 @@ full <- lm(con.per ~ eco_active+england+age50andover, data=election24aps24)
 anova(reduced, full) 
 # So, in our comparison we find that age50andover is a non-zero predictor
 # Thus, we would prefer the full model
+
+
+# MASS and Stepwise Selection ---------------------------------------------
+library(MASS)
+step.model <- lm(con.per ~eco_active+england+age50andover+british+employment+white, data=election24aps24)
+summary(step.model)
+
+step <- stepAIC(step.model, direction="both")
+step$anova
+
+# The stepwise selection has removed ecoactive and white as predictors
+
+final.model <- lm(con.per ~ england + age50andover + british + employment, data=election24aps24)
+summary(final.model)
+
+
+# Correlation Matrix ------------------------------------------------------
+
+election24aps24_sm <- subset(election24aps24, select=c(con.per, age50andover, british, employment))
+cor(election24aps24_sm, use="complete.obs")
+pairs(election24aps24_sm)
+
+# GGally
+ggpairs(election24aps24_sm)
+# Car
+
+vif(final.model)
+1/vif(final.model)
