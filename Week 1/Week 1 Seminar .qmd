@@ -1,0 +1,90 @@
+---
+title: "Week 1 Seminar Task"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+## Week 1 - Dan Jones
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyverse); library(skimr); library(forcats); library(GGally); library(ggplot2); library(car)
+
+# Load the data
+
+aps24 <- read_csv("APS2024.csv") %>% janitor::clean_names()
+election24 <- read_csv("GE2024.csv") %>% janitor::clean_names()
+
+# Merge the data
+election24aps24 <- merge(election24, aps24, by="ons_id")
+
+# Create england binary variable
+election24aps24$england <- election24aps24$country_name
+election24aps24$england <- dplyr::recode(election24aps24$england, Scotland = "Other", Wales = "Other")
+election24aps24$england <- fct_drop(election24aps24$england)
+```
+
+------------------------------------------------------------------------
+
+**Question One: When running a multiple regression model, what does it mean, statistically and conceptually, to say we are “controlling for” the effects of other variables?**
+
+To control for a variable means to isolate the effect of a predictor of interest by holding the influence of other factors constant. It is essentially done to ask whether a predictor matters on its own (or whether its effect was due to some other influencing factor). We do this in a model by incorporating these additional variables as further predictors. If upon adding the "control" variables the results are still significant, we can say the predictor’s effect persists after adjusting for that confounder (that is not to say we are rid of ALL confounders).
+
+------------------------------------------------------------------------
+
+**Question Two: Run a simple regression on `lab.per`, percent of votes for a Labour candidate, using an explanatory variable of your choice and interpret the results.**
+
+```{r}
+election24aps24$lab.per = election24aps24$lab / election24aps24$valid_votes 
+fit_lab <- lm(lab.per ~ england, data=election24aps24) 
+summary(fit_lab)
+```
+
+I chose to use Country (England vs Other) as my explanatory variable, to test whether country of residence had a significant influence on voter behaviour.
+
+This is a special case as we are using a binary predictor meaning this acts the same as a two-sample t-test comparing the mean of the two groups.
+
+Hence, in this model, the **intercept of 0.354** represents the average Labour vote share in England (35.4%). The coefficient on `englandOther` (0.013) shows that constituencies outside England had, on average, a Labour vote share 1.3 percentage points higher than those in England.
+
+However, the associated p-value is 0.422, which means this difference is not statistically significant. This suggests that country of residence does not provide a reliable explanation for variation in Labour’s vote share, which is also reflected in the model’s R² being close to zero.
+
+------------------------------------------------------------------------
+
+**Question Three: Add three additional explanatory variables of your choice to the model. For each variable state how it is plausibly related to `lab.per`. Interpret the new model (substantively and statistically). Compare your new model with your original model and report an appropriate test.**
+
+```{r}
+fit_5 <- lm(lab.per ~ england+eco_active+age50andover+age65andover, data=election24aps24)
+summary(fit_5)
+```
+
+I chose to add three additional variables:
+
+1.  Economic Activity: Constituencies with higher levels of economic activity may differ politically; those more engaged in the economy may also be more engaged in politics.
+2.  Age50andover: Cohort effects suggest that those aged 50+ may hold systematically different political beliefs. This cohort was shaped by formative experiences such as Thatcherism and the Cold War which makes them plausibly less fond of Labour.
+3.  Age65andover: Theoretical cohort effects again suggest that the very elderly may have been shaped by a different set of contexts, such as pre-EU Britain and the post-war consensus, potentially giving them even more distinct political leanings compared to younger cohorts.
+
+In this model, the intercept of 0.906 represents the predicted Labour vote share when all predictors are zero, which is not substantively meaningful given the data.
+
+The coefficient for englandOther (0.015) suggests that constituencies outside England had, on average, a Labour vote share 1.5 percentage points higher than those in England, though this effect is not statistically significant (p = 0.283).
+
+By contrast, the coefficients for eco_active (-0.0038, p \< 0.001), age50andover (-0.0033, p \< 0.01), and age65andover (-0.0042, p \< 0.01) are all negative and statistically significant, showing that constituencies with larger shares of economically active or older residents are less supportive of Labour.
+
+Importantly, the negative effect of age65 persists even after accounting for age50, suggesting that the very elderly cohort has distinct political leanings beyond those of the broader over-50 population.
+
+The model explains about a quarter of the variation in Labour support (R² = 0.246, compared to near zero in the simple regression), and the F-statistic (p \< 0.001) confirms that the inclusion of these predictors significantly improves the explanatory power of the model.
+
+------------------------------------------------------------------------
+
+**Question Four: Test for multicollinearity in your model. Explain what you might do if multicollinearity was an issue.**
+
+```{r}
+1/vif(fit_5)
+```
+
+Field (2012) recommends calculating the tolerance statistic shown above. Values beneath 0.1 indicate a serious problem, with anything below 0.2 being concerning. Each variable here is outside of these thresholds, though both age-based variables are worth examining more closely for multicollinearity due to being very close to the threshold.
+
+This is potentially explainable, as people over 65 are necessarily included in the 50+ group, creating redundancy between the two measures, and there may also be a relationship with economic activity and age. If this redundancy became problematic, I could either remove one of the age measures or collapse them into a single variable to simplify the model.

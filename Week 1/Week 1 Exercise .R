@@ -84,3 +84,15 @@ ggpairs(election24aps24_sm)
 
 vif(final.model)
 1/vif(final.model)
+
+
+# Seminar Tasks -----------------------------------------------------------
+# 2. Run a simple regression on lab.per using an explamatory variable of your choice and interpret the results
+election24aps24$lab.per = election24aps24$lab / election24aps24$valid_votes
+fit_lab <- lm(lab.per ~ age65andover, data=election24aps24)
+summary(fit_lab)
+
+# 3. Add three additional explantory variables of your choice, state how each are plausibly linked. Interpret the model and comparw with O.G. State suitable test.
+
+# 4. Test for multicollinearity
+
