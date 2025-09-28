@@ -49,3 +49,10 @@ summary(fit_3)
 fit_4 <- lm(con.per ~ eco_active+england, data=election24aps24)
 summary(fit_4)
 
+# Model Building and Comparison
+reduced <- lm(con.per ~ eco_active+england, data=election24aps24)
+full <- lm(con.per ~ eco_active+england+age50andover, data=election24aps24)
+
+anova(reduced, full) 
+# So, in our comparison we find that age50andover is a non-zero predictor
+# Thus, we would prefer the full model
