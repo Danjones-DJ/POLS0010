@@ -13,16 +13,25 @@ library(tidyverse); library(skimr); library(forcats); library(GGally); library(g
 set.seed(42)
 n <- 200
 
+# Create correlated predictors (some with multicollinearity!)
 income <- rnorm(n, 50000, 15000)
-education <- 0.7 * income + rnorm(n, 0, 10000)
-green_space <- rnorm(n, 0.5, 0.2)
-population_density <- rnorm(n, 5000, 2000)
-crime_rate <- -0.3*income + rnorm(n, 50, 15)
+education <- 0.7 * income + rnorm(n, 0, 10000)  # Highly correlated with income!
+green_space <- rnorm(n, 30, 10)  # FIX: Changed from (0.5, 0.2) to (30, 10)
+crime_rate <- -0.3 * income + rnorm(n, 50, 15)
 diversity <- rnorm(n, 0.5, 0.2)
+population_density <- rnorm(n, 5000, 2000)
 
+# Create a binary variable
 has_community_centre <- rbinom(n, 1, 0.4)
 
-wellbeing <- 30 + 0.0003*income + 0.5*green_space + -0.2*crime_rate+3*has_community_centre+5*diversity+rnorm(n,0,5)
+# Generate wellbeing (the true model includes some but not all variables)
+wellbeing <- 30 + 
+  0.0003 * income + 
+  0.5 * green_space + 
+  -0.2 * crime_rate + 
+  3 * has_community_centre +
+  5 * diversity +
+  rnorm(n, 0, 5)
 
 # Create the dataset
 neighborhoods <- data.frame(
