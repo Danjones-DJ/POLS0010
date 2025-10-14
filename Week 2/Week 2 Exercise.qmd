@@ -1,0 +1,82 @@
+---
+title: "Week 2 Exercise"
+format: html
+editor: visual
+---
+
+## **Week 2: Further techniques in linear regression**
+
+Dealing with non-linearities, plotting age to bmi value
+
+```{r}
+#| echo: false
+#| message: false
+library(haven); library(tidyverse); library(skimr); library(ggplot2); library(car)
+
+hse_and_shes12 = read_dta("2012_hse_and_shes_combined.dta")
+#str(hse_and_shes12)
+hse_and_shes12$bmival<-as.numeric(hse_and_shes12$bmival)
+hse_and_shes12$age<-as.numeric(hse_and_shes12$age)
+hse_and_shes12$Sex<-as.factor(hse_and_shes12$Sex)
+
+ggplot(hse_and_shes12, aes(x=age, y=bmival)) +
+    geom_point(shape=1) 
+
+```
+
+**Sub-setting our data** to remove irrelevant values.
+
+```{r}
+#| echo: false
+#| message: false
+hse_and_shes12.subset<-subset(hse_and_shes12, bmival>0 & age>=18)
+ggplot(hse_and_shes12.subset, aes(x=age, y=bmival)) +
+    geom_point(shape=1) +
+    geom_smooth(method = "lm") 
+```
+
+A straight line seems to be a bit assumptive, so we want to test a curvilinear relationship, by adding a quadratic shape.
+
+```{r}
+#| echo: false
+#| message: false
+
+ggplot(hse_and_shes12.subset, aes(x=age, y=bmival)) +
+  geom_point() +
+  geom_smooth(method="lm", formula= y~x + I(x^2))
+
+```
+
+This extra quadratic term is clearly useful as it now enables us to capture the eventually decreasing slope of Age's 'effect' on BMI.
+
+If we wanted to make this more complex, we could add a cubic term like below:
+
+```{r}
+#| echo: false
+#| message: false
+
+ggplot(hse_and_shes12.subset, aes(x=age, y=bmival)) +
+  geom_point() +
+  geom_smooth(method="lm", formula= y~x + I(x^2)+I(x^3))
+```
+
+Visibly we don't seem to capture very much "more" here, so it's probably not worth considering the cubic term. When we add polynomial terms it adds difficulty to interpretation, so it's only worth adding additional terms if it provides genuine value.
+
+----
+
+Let's now try to run a model of age and sex against bmi.
+
+```{r}
+#| echo: false
+#| message: false
+#| 
+bmi.model = lm(bmival ~ age+Sex, data=hse_and_shes12.subset)
+summary(bmi.model)
+
+# Quadratic version
+bmi.model.q = lm(bmival ~ age+I(age^2)+Sex, data=hse_and_shes12.subset)
+summary(bmi.model.q)
+
+# Comparing the two
+anova(bmi.model, bmi.model.q)
+```
